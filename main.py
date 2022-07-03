@@ -19,28 +19,47 @@ IMAP_SERVER = os.environ.get('IMAP_SERVER')
 imap_object = IMAPClient(IMAP_SERVER, use_uid=True, ssl=True)
 imap_object.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
 
-# TODO: Define or selec  criteria to search emails by.
+# TODO: Define or select criteria to search emails by.
 before_date = ''
 from_address = ''
+search_key = ''
+search_arg = ''
 
+# Dict of available search keys.
 imap_search_keys = {
     'all': 'ALL',
     'before': f'BEFORE {before_date}',
     'from': f'FROM {from_address}',
 }
 
-# Search emails
-imap_object.select_folder('INBOX', readonly=True)
-uids = imap_object.search(b'SINCE 01-Jul-2022')
+def search_email_messages(search_key, search_arg):
+    """Search email messages using provided IMAP search key and argument."""
 
+    msg_UIDs = imap_object.search(b'{search_key} {search_arg}')
+    print(f'Messages found: {len(msg_UIDs)}')
+    return msg_UIDs
+
+uids = search_email_messages(search_key, search_arg)
 raw_messages = imap_object.fetch(uids, ['BODY[]'])
 
-for uid in uids:
-    message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
-    print(message.get_addresses('from'))
+def display_messages(uids):
+    """Display email messages returned from search results."""
 
-# TODO: List emails to be deleted by selected criteria
+    for uid in uids:
+        message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
+        print(message.get_subject())
 
-# TODO: confirm and delete
+def delete_emails(uids):
+    """Confirm and delete email messages."""
+
+    confirm_delete = input('Do you want to delete these messages? (Y/N) ')
+
+    if confirm_delete == 'Y':
+        imap_object.delete_messages(uids)
+        print('Messages deleted successfully!')
+
+
+
+# TODO: Include feature to permanently delete all emails in the bin folder.
 
 imap_object.logout()
