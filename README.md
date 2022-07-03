@@ -1,4 +1,8 @@
 # Email Cleaner
 <hr>
 
-Readme information coming soon!
+A simple script that automates the process of cleaning up your GMail inbox!
+
+<hr>
+
+Usage information coming soon!
