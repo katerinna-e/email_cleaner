@@ -27,33 +27,35 @@ search_arg = ''
 
 # Dict of available search keys.
 imap_search_keys = {
-    'all': 'ALL',
-    'before': f'BEFORE {before_date}',
-    'from': f'FROM {from_address}',
+    'All Messages': 'ALL',
+    'Message Date': ['BEFORE', 'SINCE', 'ON'],
+    'Message Content': ['SUBJECT', 'BODY', 'TEXT'],
+    'Email Address': ['FROM', 'TO', 'CC', 'BCC'], 
+    'Message Status': ['SEEN', 'UNSEEN', 'ANSWERED', 'UNANSWERED', 'DELETED', 'UNDELETED'],
 }
+
 
 def get_search_query():
     """Prompt user for search query to search email messages."""
     
     print('Choose key to search messages by: ')
-    search_category = pyip.inputMenu(['All Messages', 'Message Date', 'Message Content', 'Email Address', 'Message Status'])
-
+    search_category = pyip.inputMenu(list(imap_search_keys.keys()), numbered=True)
     if search_category == 'All Messages':
         search_key = 'ALL'
         search_arg = None
     elif search_category == 'Message Date':
         print('Select Message Date option: ')
-        search_key = pyip.inputMenu(['BEFORE', 'SINCE', 'ON'])
+        search_key = pyip.inputMenu(imap_search_keys['Message Date'], numbered=True)
         search_arg = input('Enter date (required format - 01-Jan-1970): ')
     elif search_category == 'Message Content':
         print('Select option: ')
-        search_key = pyip.inputMenu(['SUBJECT', 'BODY', 'TEXT'])
+        search_key = pyip.inputMenu(imap_search_keys['Message Content'], numbered=True)
         search_arg = pyip.inputStr('Enter search term: ')
     elif search_category == 'Email Address':
-        search_key = pyip.inputMenu(['FROM', 'TO', 'CC', 'BCC'])
+        search_key = pyip.inputMenu(imap_search_keys['Email Address'], numbered=True)
         search_arg = pyip.inputEmail('Enter address to search by: ')
     elif search_category == 'Message Status':
-        search_key = pyip.inputMenu(['SEEN', 'UNSEEN', 'ANSWERED', 'UNANSWERED', 'DELETED', 'UNDELETED'])
+        search_key = pyip.inputMenu(imap_search_keys['Message Status'], numbered=True)
         search_arg = None
 
     return search_key, search_arg
