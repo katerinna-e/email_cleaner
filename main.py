@@ -32,29 +32,28 @@ imap_search_keys = {
 
 def search_email_messages(search_key, search_arg):
     """Search email messages using provided IMAP search key and argument."""
+
     msg_UIDs = imap_object.search(b'{search_key} {search_arg}')
-    print(f'Messages found: {len(uids)}')
+    print(f'Messages found: {len(msg_UIDs)}')
     return msg_UIDs
-
-imap_object.select_folder('INBOX', readonly=False)
-uids = imap_object.search(b'FROM reply@rs.ca.nextdoor.com')
-
-print(f'Messages found: {len(uids)}')
 
 raw_messages = imap_object.fetch(uids, ['BODY[]'])
 
-for uid in uids:
-    message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
-    print(message.get_subject())
+def display_messages(uids):
+    """Display email messages returned from search results."""
 
-# TODO: List emails to be deleted by selected criteria
+    for uid in uids:
+        message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
+        print(message.get_subject())
 
-# Confirm and delete email messages
-confirm_delete = input('Do you want to delete these messages? (Y/N) ')
+def delete_emails(uids):
+    """Confirm and delete email messages."""
 
-if confirm_delete == 'Y':
-    imap_object.delete_messages(uids)
-    print('Messages deleted successfully!')
+    confirm_delete = input('Do you want to delete these messages? (Y/N) ')
+
+    if confirm_delete == 'Y':
+        imap_object.delete_messages(uids)
+        print('Messages deleted successfully!')
 
 # TODO: Include feature to permanently delete all emails in the bin folder.
 
