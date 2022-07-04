@@ -20,17 +20,23 @@ def main():
     imap_object = connect_to_client()
     imap_object.select_folder('INBOX', readonly=True)
 
-    uids = search_email_messages(imap_object, get_search_query())
-    print(uids)
+    run_program = True
 
-    raw_messages = imap_object.fetch(uids, ['BODY[]'])
-    display_messages(uids, raw_messages)
+    while run_program:
 
-    delete_emails(imap_object, uids)
+        action = pyip.inputMenu(['Search', 'Delete', 'Quit'], numbered=True)
 
-    imap_object.logout()
-    print('IMAP Session ended successfully.')
-
+        if action == 'Quit':
+            run_program = False
+            imap_object.logout()
+            print('IMAP Session ended successfully.')
+        elif action == 'Search':
+            uids = search_email_messages(imap_object, get_search_query())
+            # print(uids)
+            raw_messages = imap_object.fetch(uids, ['BODY[]'])
+            display_messages(uids, raw_messages)
+        elif action == 'Delete':
+            delete_emails(imap_object)
 
 def connect_to_client():
     """Connect to email client"""
@@ -91,18 +97,24 @@ def display_messages(uids, raw_messages):
     """
     Display email messages returned from search results.
     """
+    # TODO: Add feature to allow user which message parts to display
     for uid in uids:
         message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
         print(f'Subject: {message.get_subject()}, Sender: {message.get_address("from")}')
 
-def delete_emails(imap_object, uids):
+def delete_emails(imap_object):
     """
     Confirm and delete email messages.
     """
+    imap_object.select_folder('INBOX', readonly=False)
+    
+    print('Provide criteria to select emails for deletion.')
+    uids = search_email_messages(imap_object, get_search_query())
+
     confirm_delete = pyip.inputYesNo('Do you want to delete these messages? ')
     if confirm_delete == 'yes':
         imap_object.delete_messages(uids)
-        print('Messages deleted successfully!')
+        print(f'{len(uids)} Messages deleted successfully!')
 
 
 # TODO: Include feature to permanently delete all emails in the bin folder.
