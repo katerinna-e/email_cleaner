@@ -15,15 +15,30 @@ EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS')
 EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 HOST = os.environ.get('IMAP_SERVER')
 
-# Connect to email client
-imap_object = IMAPClient(HOST, use_uid=True, ssl=True)
-imap_object.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+def main():
+    # Connect to email client
+    imap_object = connect_to_client()
+    imap_object.select_folder('INBOX', readonly=True)
 
-# TODO: Define or select criteria to search emails by.
-before_date = ''
-from_address = ''
-search_key = ''
-search_arg = ''
+    uids = search_email_messages(imap_object, get_search_query())
+    print(uids)
+
+    raw_messages = imap_object.fetch(uids, ['BODY[]'])
+    display_messages(uids, raw_messages)
+
+    delete_emails(imap_object, uids)
+
+    imap_object.logout()
+    print('IMAP Session ended successfully.')
+
+
+def connect_to_client():
+    """Connect to email client"""
+    connection = IMAPClient(HOST, use_uid=True, ssl=True)
+    connection.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+    print('Successfully connected to client.')
+    return connection
+
 
 # Dict of available search keys.
 imap_search_keys = {
@@ -34,10 +49,9 @@ imap_search_keys = {
     'Message Status': ['SEEN', 'UNSEEN', 'ANSWERED', 'UNANSWERED', 'DELETED', 'UNDELETED'],
 }
 
-
 def get_search_query():
     """Prompt user for search query to search email messages."""
-    
+
     print('Choose key to search messages by: ')
     search_category = pyip.inputMenu(list(imap_search_keys.keys()), numbered=True)
     if search_category == 'All Messages':
@@ -58,21 +72,22 @@ def get_search_query():
         search_key = pyip.inputMenu(imap_search_keys['Message Status'], numbered=True)
         search_arg = None
 
-    return search_key, search_arg
+    query = f'{search_key} {search_arg}'
+    return query
 
 
-def search_email_messages(search_key, search_arg):
+def search_email_messages(imap_object, query):
     """
     Search email messages using provided IMAP search key and argument.
     """
-    msg_UIDs = imap_object.search(b'{search_key} {search_arg}')
+    encoded_query = bytes(query, 'UTF-8')
+    msg_UIDs = imap_object.search(encoded_query)
     print(f'Messages found: {len(msg_UIDs)}')
     return msg_UIDs
 
-uids = search_email_messages(search_key, search_arg)
-raw_messages = imap_object.fetch(uids, ['BODY[]'])
+# TODO: Parse messages more throughly; display message parts.
 
-def display_messages(uids):
+def display_messages(uids, raw_messages):
     """
     Display email messages returned from search results.
     """
@@ -80,7 +95,7 @@ def display_messages(uids):
         message = pyzmail.PyzMessage.factory(raw_messages[uid][b'BODY[]'])
         print(f'Subject: {message.get_subject()}, Sender: {message.get_address("from")}')
 
-def delete_emails(uids):
+def delete_emails(imap_object, uids):
     """
     Confirm and delete email messages.
     """
@@ -90,7 +105,8 @@ def delete_emails(uids):
         print('Messages deleted successfully!')
 
 
-
 # TODO: Include feature to permanently delete all emails in the bin folder.
 
-imap_object.logout()
+
+if __name__ == '__main__':
+    main()
